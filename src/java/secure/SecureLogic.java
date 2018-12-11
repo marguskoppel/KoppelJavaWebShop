@@ -28,16 +28,41 @@ public class SecureLogic {
     }
     
     public void addRoleToUser(UserRoles ur){
+       // if(ur.getRole().getName().equals("ADMIN")){
+            userRolesFacade.create(ur);
+            //Role addNewRole = roleFacade.findRoleByName("USER");
+            //UserRoles addedNewRoles = new UserRoles(ur.getUser(),addNewRole);
+            //userRolesFacade.create(addedNewRoles);
+        //}else if(ur.getRole().getName().equals("USER")){
+           // userRolesFacade.create(ur);
+        
+       // }
+       
+}   
+
+    /*public void addRoleToUser(UserRoles ur){
         if(ur.getRole().getName().equals("ADMIN")){
             userRolesFacade.create(ur);
+            
+        }else if(ur.getRole().getName().equals("USER")){
+            userRolesFacade.create(ur);
+        }
+    }*/
+     /*public void addRoleToUser(UserRoles ur){
+        if(ur.getRole().getName().equals("ADMIN")){
+            userRolesFacade.create(ur);
+            List<Role> addNewRoles = roleFacade.findAll();
+            int m = addNewRoles.size();
+            for(int i=0; i<m; i++ ){
+                userRolesFacade.create(addNewRoles.get(i));
+            }
             Role addNewRole = roleFacade.findRoleByName("USER");
             UserRoles addedNewRoles = new UserRoles(ur.getUser(),addNewRole);
             userRolesFacade.create(addedNewRoles);
         }else if(ur.getRole().getName().equals("USER")){
             userRolesFacade.create(ur);
-        }
-        
-    }
+        }*/
+    
     public void deleteRoleToUser(User user){
         List<UserRoles> listUserRoles = userRolesFacade.findByUser(user);
         int n = listUserRoles.size();
@@ -63,15 +88,16 @@ public class SecureLogic {
         List<UserRoles> listUserRoles = userRolesFacade.findByUser(regUser);
         int n = listUserRoles.size();
         for(int i = 0; i<n; i++){
-            if("ADMIN".equals(listUserRoles.get(i).getRole().getName())){
+            //if("ADMIN".equals(listUserRoles.get(i).getRole().getName())){
                 return listUserRoles.get(i).getRole().getName();
-            }
+            //}
+        //}
+        //for(int i = 0; i<n; i++){
+            //if("USER".equals(listUserRoles.get(i).getRole().getName())){
+               // return listUserRoles.get(i).getRole().getName();
+           // }
         }
-        for(int i = 0; i<n; i++){
-            if("USER".equals(listUserRoles.get(i).getRole().getName())){
-                return listUserRoles.get(i).getRole().getName();
-            }
-        }
+       
         return null;
     }
     

@@ -43,7 +43,7 @@ public class Secure extends HttpServlet {
             EncriptPass ep = new EncriptPass();
             String salts = ep.createSalts();
             String encriptPass = ep.setEncriptPass("admin", salts);
-            User user = new User("Admin", "",
+            /*User user = new User("Admin", "",
                     "", "", "admin", encriptPass, salts);
             userFacade.create(user);
             Role role = new Role();
@@ -58,6 +58,23 @@ public class Secure extends HttpServlet {
             roleFacade.create(role);
             ur.setUser(user);
             ur.setRole(role);
+            userRolesFacade.create(ur);*/
+            User admin = new User("Admin", "",
+                    "", "", "admin", encriptPass, salts);
+            userFacade.create(admin);
+            Role adminRole = new Role();
+            adminRole.setName("ADMIN");
+            roleFacade.create(adminRole);
+            UserRoles ur = new UserRoles();
+            ur.setUser(admin);
+            ur.setRole(adminRole);
+            userRolesFacade.create(ur);
+            
+            Role userRole = new Role();
+            userRole.setName("USER");
+            roleFacade.create(userRole);
+            ur.setUser(admin);
+            ur.setRole(userRole);
             userRolesFacade.create(ur);
         }
     }

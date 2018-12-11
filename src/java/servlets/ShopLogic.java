@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -15,9 +17,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import secure.Role;
 import secure.SecureLogic;
+import secure.UserRoles;
 import session.ProductFacade;
 import session.PurchaseFacade;
+import session.RoleFacade;
 import session.UserFacade;
 import util.EncriptPass;
 import util.PageReturner;
@@ -40,6 +45,11 @@ import util.PageReturner;
     "/admin_users",
     "/usersNotActive",
     "/activateUser",
+    "/admin_roles",
+    "/createRole",
+    "/deleteRole",
+    "/setRole",
+    "/changeUsersRoles",
     "/admin_purchases",
     "/addProduct",
     "/createProduct",
@@ -51,7 +61,8 @@ import util.PageReturner;
     "/editU",
     "/deleteUser",
     "/deleteU",
-    "/userPurchase",})
+    "/userPurchase",
+"/test",})
 public class ShopLogic extends HttpServlet {
 
     @EJB
@@ -60,6 +71,10 @@ public class ShopLogic extends HttpServlet {
     UserFacade userFacade;
     @EJB
     PurchaseFacade purchaseFacade;
+    @EJB
+    RoleFacade roleFacade;
+    @EJB
+    RoleFacade userRolesFacade;
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -103,12 +118,43 @@ public class ShopLogic extends HttpServlet {
                     User user = new User(name, surname, phone, city, login,
                             encriptPass, salts);
                     userFacade.create(user);
+                    
+                    //Role defaultRoleForRegUser = roleFacade.findRoleUser();
+                    //Role defaultRoleForRegUser = roleFacade.find(2);
+                    Role defaultRoleForRegUser = roleFacade.findRoleByName("user");
+                    UserRoles defaultUR = new UserRoles();
+                    //userRolesFacade.create(defaultUR);
+                    
+                    defaultUR.setUser(user);
+                    defaultUR.setRole(defaultRoleForRegUser);
+                    sl.addRoleToUser(defaultUR);
+                    userRolesFacade.edit(defaultRoleForRegUser);
+                    
+               
+                
+                    
+                    
                     request.setAttribute("user", user);
+                    //request.setAttribute("defaultUR", defaultUR);
+                    //request.setAttribute("defaultRoleForRegUser", defaultRoleForRegUser);
                     request.setAttribute("info", "Your registration was successful. You can Login now!");
                     response.sendRedirect("loginPage");
                     //request.getRequestDispatcher(PageReturner.getPage("loginPage")).forward(request, response);
                     break;
                 }
+                /*case "/test":
+                    /*Role testfindrole = roleFacade.findRoleByName("user");
+                    User testUser = userFacade.findByLogin("tester7");
+                    UserRoles testUr = new UserRoles(testUser, testfindrole);
+                    testUr.setUser(testUser);
+                    testUr.setRole(testfindrole);
+                    userRolesFacade.create(testUr);
+                    UserRoles testUR = new UserRoles(regUser, role);
+                    userRolesFacade.create(testUR);
+                    
+                    request.setAttribute("testfindrole", testUR);
+                    request.getRequestDispatcher(PageReturner.getPage("test")).forward(request, response);
+                */
                 case "/products": {
                     List<Product> products = productFacade.findActived(true);
                     request.setAttribute("role", sl.getRole(regUser));
@@ -245,6 +291,80 @@ public class ShopLogic extends HttpServlet {
                     response.sendRedirect("admin_users");
                     break;
 
+                case "/admin_roles":
+                    //List<User> usersRoles = userFacade.findActivedExceptAdmin(true);
+                    Map<User, String> mapUsersRoles = new HashMap<>();
+                    List<User> listUsersRoles = userFacade.findAllExceptAdmin();
+                    int n = listUsersRoles.size();
+                    for (int i = 0; i < n; i++) {
+                        mapUsersRoles.put(listUsersRoles.get(i), sl.getRole(listUsersRoles.get(i)));
+                    }
+                    List<Role> listRoles = roleFacade.findAllExceptAdmin();
+                    //request.setAttribute("role", sl.getRole(regUser));
+                    request.setAttribute("mapUsersRoles", mapUsersRoles);
+                    request.setAttribute("listRoles", listRoles);
+                    request.setAttribute("info_users", "Users list");
+                    request.getRequestDispatcher(PageReturner.getPage("admin_roles")).forward(request, response);
+                    break;
+
+                case "/changeUsersRoles":
+                    String setRoleButton = request.getParameter("setRoleButton");
+                    String delRoleButton = request.getParameter("delRoleButton");
+                    String usersId = request.getParameter("userSetRole");
+                    String rolesId = request.getParameter("roleSetToUser");
+                    User userForRoleSet = userFacade.find(new Long(usersId));
+                    Role roleForUserSet = roleFacade.find(new Long(rolesId));
+                    UserRoles ur = new UserRoles(userForRoleSet, roleForUserSet);
+                    //userRolesFacade.create(ur);
+                    if (setRoleButton != null) {
+                        sl.addRoleToUser(ur);
+                    }
+                    if (delRoleButton != null) {
+                        sl.deleteRoleToUser(ur.getUser());
+                    }
+                    /*mapUsersRoles = new HashMap<>();
+                    listUsersRoles = userFacade.findAllExceptAdmin();
+                    n = listUsersRoles.size();
+                    for (int i = 0; i < n; i++) {
+                        mapUsersRoles.put(listUsersRoles.get(i), sl.getRole(listUsersRoles.get(i)));
+                    }
+                    request.setAttribute("mapUsersRoles", mapUsersRoles);
+                    List<Role> newListRoles = roleFacade.findAllExceptAdmin();
+                    request.setAttribute("listUsersRoles", newListRoles);*/
+                    //request.getRequestDispatcher(PageReturner.getPage("admin_roles")).forward(request, response);
+                    response.sendRedirect("admin_roles");
+                    break;
+
+                case "/createRole":
+                    String nameRole = request.getParameter("nameRole");
+                    Role role = new Role(nameRole);
+                    roleFacade.create(role);
+                    request.setAttribute("info_role", nameRole);
+                    //request.getRequestDispatcher(PageReturner.getPage("admin_roles")).forward(request, response);
+                    response.sendRedirect("admin_roles");
+                    break;
+
+                case "/deleteRole":
+                    String roleId = request.getParameter("role");
+                    Role delRole = roleFacade.find(new Long(roleId));
+                    roleFacade.remove(delRole);
+                    request.setAttribute("delRole", delRole);
+
+                    //request.getRequestDispatcher(PageReturner.getPage("admin_roles")).forward(request, response);
+                    response.sendRedirect("admin_roles");
+                    break;
+
+               /* case "/setRole":
+                    String setRoleId = request.getParameter("assignRole");
+                    String sr = request.getParameter("sr");
+                    User setUserandRole = userFacade.find(new Long(sr));
+                    Role setRoleandUser = roleFacade.find(new Long(setRoleId));
+                    UserRoles userRoles = new UserRoles(null, null);
+                    userRolesFacade.create(userRoles);
+                    request.setAttribute("userRoles", userRoles);
+
+                    request.getRequestDispatcher(PageReturner.getPage("admin_roles")).forward(request, response);*/
+
                 case "/admin_purchases":
 
                     List<Purchase> purchasesA = purchaseFacade.findAll();
@@ -353,6 +473,10 @@ public class ShopLogic extends HttpServlet {
                     request.setAttribute("purchaseUser", purchaseUser);
                     request.getRequestDispatcher(PageReturner.getPage("userPurchase")).forward(request, response);
                     break;
+                    
+                    
+                
+                    
 
                 default:
                     request.getRequestDispatcher(PageReturner.getPage("welcome")).forward(request, response);
